@@ -49,7 +49,7 @@ func typeImpl(command string) {
 			return
 		}
 	}
-	fmt.Println(command + " :not found")
+	fmt.Println(command + ": not found")
 }
 
 func eval(input string) (string, error) {
