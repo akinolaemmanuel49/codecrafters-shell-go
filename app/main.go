@@ -14,9 +14,16 @@ var _ = fmt.Fprint
 const (
 	EXIT = "exit"
 	ECHO = "echo"
+	TYPE = "type"
 )
 
-func exit(codeStr *string) {
+var COMMANDS = []string{
+	EXIT,
+	ECHO,
+	TYPE,
+}
+
+func exitImpl(codeStr *string) {
 	if codeStr == nil {
 		os.Exit(0)
 	}
@@ -28,11 +35,21 @@ func exit(codeStr *string) {
 	os.Exit(codeInt)
 }
 
-func echo(args []string) {
+func echoImpl(args []string) {
 	for _, arg := range args {
 		fmt.Print(arg, " ")
 	}
 	fmt.Println()
+}
+
+func typeImpl(command string) {
+	for _, cmd := range COMMANDS {
+		if cmd == command {
+			fmt.Println(command + " is a shell builtin")
+			return
+		}
+	}
+	fmt.Println(command + " :not found")
 }
 
 func eval(input string) (string, error) {
@@ -44,11 +61,18 @@ func eval(input string) (string, error) {
 	switch _command {
 	case EXIT:
 		if len(_args) == 0 {
-			exit(nil)
+			exitImpl(nil)
 		}
-		exit(&_args[0])
+		exitImpl(&_args[0])
 	case ECHO:
-		echo(_args)
+		echoImpl(_args)
+		return "", nil
+	case TYPE:
+		if len(_args) > 1 {
+			fmt.Fprintf(os.Stderr, "%s has too many arguments\n", _command)
+			return "", nil
+		}
+		typeImpl(_args[0])
 		return "", nil
 	}
 	return _command + ": command not found", nil
