@@ -64,6 +64,9 @@ func execImpl(command string, args []string) {
 	}
 
 	cmd := exec.Command(command, args...)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Stdin = os.Stdin
 	err := cmd.Run()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
