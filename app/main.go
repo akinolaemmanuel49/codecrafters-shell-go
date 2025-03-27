@@ -57,6 +57,20 @@ func typeImpl(args []string) {
 	}
 }
 
+func execImpl(command string, args []string) {
+	if command == "" {
+		fmt.Fprintf(os.Stderr, "Command '%s' not found", command)
+		return
+	}
+	cmd := exec.Command(command, args...)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err := cmd.Run()
+	if err != nil {
+		fmt.Fprint(os.Stderr, err)
+	}
+}
+
 func eval(input string) (string, error) {
 	_input := strings.Split(strings.TrimSuffix(input, "\n"), " ")
 
@@ -77,6 +91,9 @@ func eval(input string) (string, error) {
 		return "", nil
 	case TYPE:
 		typeImpl(_args)
+		return "", nil
+	default:
+		execImpl(_command, _args)
 		return "", nil
 	}
 	return _command + ": command not found", nil
