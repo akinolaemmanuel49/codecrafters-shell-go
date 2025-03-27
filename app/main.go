@@ -59,15 +59,14 @@ func typeImpl(args []string) {
 
 func execImpl(command string, args []string) {
 	if command == "" {
-		fmt.Fprintf(os.Stderr, "%s: command not found", command)
+		fmt.Fprintf(os.Stderr, "%s: command not found\n", command)
 		return
 	}
 
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	cmd := exec.Command(command, args...)
 	err := cmd.Run()
 	if err != nil {
-		fmt.Fprint(os.Stderr, err)
+		fmt.Fprintf(os.Stderr, "%v\n", err)
 	}
 }
 
@@ -106,13 +105,13 @@ func main() {
 		reader := bufio.NewReader(os.Stdin)
 		command, err := reader.ReadString('\n')
 		if err != nil {
-			fmt.Fprint(os.Stderr, "Error reading input:", err)
+			fmt.Fprintf(os.Stderr, "Error reading input: %v\n", err)
 			return
 		}
 
 		output, err := eval(command)
 		if err != nil {
-			fmt.Fprint(os.Stderr, err)
+			fmt.Fprintf(os.Stderr, "%v\n", err)
 		} else {
 			if output != "" {
 				fmt.Println(output)
