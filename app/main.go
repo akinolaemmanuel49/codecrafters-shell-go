@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"os/exec"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -24,6 +26,7 @@ var COMMANDS = []string{
 }
 
 func exitImpl(codeStr *string) {
+	fmt.Fprint(os.Stdout, "exit\n")
 	if codeStr == nil {
 		os.Exit(0)
 	}
@@ -42,14 +45,16 @@ func echoImpl(args []string) {
 	fmt.Println()
 }
 
-func typeImpl(command string) {
-	for _, cmd := range COMMANDS {
-		if cmd == command {
-			fmt.Println(command + " is a shell builtin")
-			return
+func typeImpl(args []string) {
+	for i, cmd := range args {
+		if slices.Contains(COMMANDS, cmd) {
+			fmt.Println(args[i] + " is a shell builtin")
+		} else if path, err := exec.LookPath(args[i]); err == nil {
+			fmt.Printf("%s is %s\n", args[i], path)
+		} else {
+			fmt.Println(args[i] + ": not found")
 		}
 	}
-	fmt.Println(command + ": not found")
 }
 
 func eval(input string) (string, error) {
@@ -62,17 +67,16 @@ func eval(input string) (string, error) {
 	case EXIT:
 		if len(_args) == 0 {
 			exitImpl(nil)
+		} else if len(_args) > 1 {
+			fmt.Fprintf(os.Stderr, "%s: too many arguments\n", EXIT)
+			return "", nil
 		}
 		exitImpl(&_args[0])
 	case ECHO:
 		echoImpl(_args)
 		return "", nil
 	case TYPE:
-		if len(_args) > 1 {
-			fmt.Fprintf(os.Stderr, "%s has too many arguments\n", _command)
-			return "", nil
-		}
-		typeImpl(_args[0])
+		typeImpl(_args)
 		return "", nil
 	}
 	return _command + ": command not found", nil
