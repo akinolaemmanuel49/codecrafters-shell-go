@@ -71,6 +71,7 @@ func execImpl(command string, args []string) {
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%s: command not found\n", command)
 	}
+}
 
 func eval(input string) (string, error) {
 	_input := strings.Split(strings.TrimSuffix(input, "\n"), " ")
