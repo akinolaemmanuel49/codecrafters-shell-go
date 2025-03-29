@@ -11,7 +11,7 @@ import (
 )
 
 func eval(input string) (string, error) {
-	_input := parser.ParseInput(input)
+	_input, _ := parser.ParseInput(input)
 
 	_command := _input[0]
 	_args := _input[1:]
