@@ -2,6 +2,7 @@ package parser
 
 import (
 	"errors"
+	"regexp"
 	"strings"
 )
 
@@ -9,29 +10,25 @@ import (
 func ParseInput(input string) ([]string, error) {
 	var tokens []string
 	var current strings.Builder
-	var inQuotes rune = 0 // Tracks the active quote type (' or ")
-	escaped := false      // Tracks if the last character was '\'
+	var inQuotes rune = 0 // Tracks quote type (' or ")
+	escaped := false      // Tracks if previous character was a backslash
+
+	if strings.Contains(input, "\\") {
+		re := regexp.MustCompile(`[^\\] +`)
+		args := re.Split(input, -1)
+
+		for i := range args {
+			args[i] = strings.ReplaceAll(args[i], "\\", "")
+		}
+
+		return args, nil
+	}
 
 	for i := 0; i < len(input); i++ {
 		ch := rune(input[i])
 
 		if escaped {
-			// Handle escaped characters correctly
-			if inQuotes != 0 { // Only expand \n inside quotes
-				switch ch {
-				case 'n':
-					current.WriteRune('\n')
-				case '\\', '\'', '"', ' ':
-					current.WriteRune(ch)
-				default:
-					current.WriteRune('\\') // Keep unknown backslash escapes
-					current.WriteRune(ch)
-				}
-			} else {
-				// Keep `\n` as-is outside of quotes
-				current.WriteRune('\\')
-				current.WriteRune(ch)
-			}
+			current.WriteRune(ch)
 			escaped = false
 			continue
 		}
@@ -43,7 +40,7 @@ func ParseInput(input string) ([]string, error) {
 			if inQuotes != 0 {
 				current.WriteRune(ch) // Keep spaces inside quotes
 			} else if current.Len() > 0 {
-				tokens = append(tokens, current.String()) // End of token
+				tokens = append(tokens, current.String())
 				current.Reset()
 			}
 		case '\'', '"':
@@ -52,14 +49,13 @@ func ParseInput(input string) ([]string, error) {
 			} else if inQuotes == 0 {
 				inQuotes = ch // Opening quote
 			} else {
-				current.WriteRune(ch) // Keep quotes inside different quote types
+				current.WriteRune(ch) // Allow different nested quotes
 			}
 		default:
 			current.WriteRune(ch)
 		}
 	}
 
-	// Handle trailing errors
 	if escaped {
 		return nil, errors.New("syntax error: trailing backslash")
 	}
@@ -67,7 +63,6 @@ func ParseInput(input string) ([]string, error) {
 		return nil, errors.New("syntax error: unmatched quote")
 	}
 
-	// Add the last token if present
 	if current.Len() > 0 {
 		tokens = append(tokens, current.String())
 	}
