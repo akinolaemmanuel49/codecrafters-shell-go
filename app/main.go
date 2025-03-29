@@ -11,10 +11,7 @@ import (
 )
 
 func eval(input string) (string, error) {
-	_input, _ := parser.ParseInput(input)
-
-	_command := _input[0]
-	_args := _input[1:]
+	_args, _command, _ := parser.ParseInput(input)
 
 	switch _command {
 	case commands.EXIT:
