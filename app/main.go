@@ -81,6 +81,10 @@ func cdImpl(args *[]string) {
 
 	dir := (*args)[0]
 
+	if dir == "~" {
+		dir = os.Getenv("HOME")
+	}
+
 	if dir == "-" {
 		dir = ENVIRONMENT_VARIABLES["OLDPWD"]
 		if dir == "" {
