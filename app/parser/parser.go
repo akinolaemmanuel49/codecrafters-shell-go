@@ -31,9 +31,16 @@ func ParseInput(input string) []string {
 
 			// Find the matching closing quote, handling escaped quotes
 			for len(_input) > 0 {
-				// If we find a backslash inside a quote, check if it's escaping something
-				if len(_input) > 1 && _input[0] == '\\' {
-					currentToken += string(_input[1])
+				// If we find a backslash inside a quote
+				if _input[0] == '\\' && len(_input) > 1 {
+					// In shells, most backslash escapes inside quotes are treated literally
+					// Only escaping the quote character itself or another backslash has special meaning
+					if _input[1] == quote || _input[1] == '\\' {
+						currentToken += string(_input[1])
+					} else {
+						// For all other characters following a backslash, keep both the backslash and the character
+						currentToken += string('\\') + string(_input[1])
+					}
 					_input = _input[2:]
 				} else if _input[0] == quote {
 					// End of quoted section
