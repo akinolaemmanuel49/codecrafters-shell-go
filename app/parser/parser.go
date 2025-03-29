@@ -16,14 +16,20 @@ func ParseInput(input string) ([]string, error) {
 		ch := rune(input[i])
 
 		if escaped {
-			// Handle escaped characters
-			switch ch {
-			case 'n': // Convert \n to actual newline
-				current.WriteRune('\n')
-			case '\\', '\'', '"', ' ':
-				current.WriteRune(ch) // Preserve escaped quotes, spaces, and slashes
-			default:
-				current.WriteRune('\\') // Keep the backslash if it's not an escape sequence
+			// Handle escaped characters correctly
+			if inQuotes != 0 { // Only expand \n inside quotes
+				switch ch {
+				case 'n':
+					current.WriteRune('\n')
+				case '\\', '\'', '"', ' ':
+					current.WriteRune(ch)
+				default:
+					current.WriteRune('\\') // Keep unknown backslash escapes
+					current.WriteRune(ch)
+				}
+			} else {
+				// Keep `\n` as-is outside of quotes
+				current.WriteRune('\\')
 				current.WriteRune(ch)
 			}
 			escaped = false
@@ -32,7 +38,7 @@ func ParseInput(input string) ([]string, error) {
 
 		switch ch {
 		case '\\':
-			escaped = true // Next character should be escaped
+			escaped = true
 		case ' ', '\t':
 			if inQuotes != 0 {
 				current.WriteRune(ch) // Keep spaces inside quotes
