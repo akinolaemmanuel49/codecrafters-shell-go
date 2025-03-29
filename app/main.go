@@ -46,10 +46,6 @@ func exitImpl(codeStr *string) {
 
 func echoImpl(args []string) {
 	for _, arg := range args {
-		// Remove single quotes
-		if strings.HasPrefix(arg, "'") && strings.HasSuffix(arg, "'") {
-			arg = arg[1 : len(arg)-1]
-		}
 		fmt.Print(arg, " ")
 	}
 	fmt.Println()
@@ -131,6 +127,13 @@ func eval(input string) (string, error) {
 
 	_command := _input[0]
 	_args := _input[1:]
+
+	// Remove single quotes
+	for i, arg := range _args {
+		if strings.HasPrefix(arg, "'") && strings.HasSuffix(arg, "'") {
+			_args[i] = arg[1 : len(arg)-1]
+		}
+	}
 
 	switch _command {
 	case EXIT:
