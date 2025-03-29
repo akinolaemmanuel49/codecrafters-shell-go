@@ -8,28 +8,32 @@ func ParseInput(input string) []string {
 	// Trim any carriage returns or newlines
 	_input := strings.Trim(input, "\r\n")
 	var tokens []string
+	var currentToken string
+	var inWord bool = false
 
 	// Process the input until we've consumed it all
 	for len(_input) > 0 {
-		// Skip leading whitespace
-		_input = strings.TrimLeft(_input, " \t")
-		if len(_input) == 0 {
-			break
+		// Skip leading whitespace when not in a word
+		if !inWord {
+			_input = strings.TrimLeft(_input, " \t")
+			if len(_input) == 0 {
+				break
+			}
 		}
 
 		// Check if we start with a quote
 		if _input[0] == '"' || _input[0] == '\'' {
+			inWord = true
 			// Get the quote character
 			quote := _input[0]
 			// Remove the opening quote
 			_input = _input[1:]
 
 			// Find the matching closing quote, handling escaped quotes
-			token := ""
 			for len(_input) > 0 {
-				// If we find a backslash inside a quote, check if it's escaping the quote
-				if len(_input) > 1 && _input[0] == '\\' && _input[1] == quote {
-					token += string(quote)
+				// If we find a backslash inside a quote, check if it's escaping something
+				if len(_input) > 1 && _input[0] == '\\' {
+					currentToken += string(_input[1])
 					_input = _input[2:]
 				} else if _input[0] == quote {
 					// End of quoted section
@@ -37,31 +41,35 @@ func ParseInput(input string) []string {
 					break
 				} else {
 					// Add the character to our token
-					token += string(_input[0])
+					currentToken += string(_input[0])
 					_input = _input[1:]
 				}
 			}
-
-			tokens = append(tokens, token)
+		} else if _input[0] == '\\' && len(_input) > 1 {
+			// Handle backslash escape outside quotes
+			inWord = true
+			// Preserve the literal value of the next character, including space
+			currentToken += string(_input[1])
+			_input = _input[2:]
+		} else if strings.ContainsRune(" \t", rune(_input[0])) {
+			// Whitespace outside quotes means end of current token
+			if inWord {
+				tokens = append(tokens, currentToken)
+				currentToken = ""
+				inWord = false
+			}
+			_input = _input[1:]
 		} else {
-			// Handle non-quoted tokens, which might contain backslash escapes
-			token := ""
-			for len(_input) > 0 && !strings.ContainsRune(" \t", rune(_input[0])) {
-				// Handle backslash escape outside quotes
-				if _input[0] == '\\' && len(_input) > 1 {
-					// Preserve the literal value of the next character, including space
-					token += string(_input[1])
-					_input = _input[2:]
-				} else {
-					token += string(_input[0])
-					_input = _input[1:]
-				}
-			}
-
-			if token != "" {
-				tokens = append(tokens, token)
-			}
+			// Regular character outside quotes
+			inWord = true
+			currentToken += string(_input[0])
+			_input = _input[1:]
 		}
+	}
+
+	// Add the final token if there is one
+	if currentToken != "" {
+		tokens = append(tokens, currentToken)
 	}
 
 	return tokens
