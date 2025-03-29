@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"slices"
 	"strconv"
 	"strings"
@@ -17,12 +18,14 @@ const (
 	EXIT = "exit"
 	ECHO = "echo"
 	TYPE = "type"
+	PWD  = "pwd"
 )
 
 var COMMANDS = []string{
 	EXIT,
 	ECHO,
 	TYPE,
+	PWD,
 }
 
 func exitImpl(codeStr *string) {
@@ -55,6 +58,15 @@ func typeImpl(args []string) {
 			fmt.Println(args[i] + ": not found")
 		}
 	}
+}
+
+func pwdImpl() {
+	ex, err := os.Executable()
+	if err != nil {
+		return
+	}
+	exPath := filepath.Dir(ex)
+	fmt.Fprint(os.Stdout, exPath)
 }
 
 func execImpl(command string, args []string) {
@@ -93,6 +105,9 @@ func eval(input string) (string, error) {
 		return "", nil
 	case TYPE:
 		typeImpl(_args)
+		return "", nil
+	case PWD:
+		pwdImpl()
 		return "", nil
 	default:
 		execImpl(_command, _args)
