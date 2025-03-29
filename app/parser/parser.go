@@ -14,14 +14,14 @@ func ParseInput(input string) ([]string, error) {
 
 	for _, ch := range strings.TrimSpace(input) {
 		if escaped {
-			// Handle escape sequences (only in double quotes)
-			if inQuotes == '"' && (ch == '"' || ch == '$' || ch == '`' || ch == '\\') {
-				current.WriteRune(ch) // Keep the escaped character
-			} else if inQuotes == 0 || inQuotes == '\'' {
-				current.WriteRune('\\') // Preserve backslash in single quotes or outside quotes
-				current.WriteRune(ch)
+			// If previous char was '\', handle escaping
+			if ch == ' ' {
+				current.WriteRune(' ') // Convert `\ ` to a space
+			} else if inQuotes == '"' && (ch == '"' || ch == '$' || ch == '`' || ch == '\\') {
+				current.WriteRune(ch) // Escape valid double-quote characters
 			} else {
-				current.WriteRune(ch) // Normal character
+				current.WriteRune('\\') // Preserve the backslash for other cases
+				current.WriteRune(ch)
 			}
 			escaped = false
 			continue
@@ -43,7 +43,7 @@ func ParseInput(input string) ([]string, error) {
 			} else if inQuotes == 0 {
 				inQuotes = ch // Opening quote
 			} else {
-				current.WriteRune(ch) // Nested quote inside different type
+				current.WriteRune(ch) // Nested quotes allowed
 			}
 		default:
 			current.WriteRune(ch)
