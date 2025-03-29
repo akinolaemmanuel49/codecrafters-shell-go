@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-// ParseInput parses a shell-like command string into arguments, handling quotes and backslashes.
+// ParseInput parses a shell-like command string into arguments, handling quotes and escapes.
 func ParseInput(input string) ([]string, error) {
 	var tokens []string
 	var current strings.Builder
@@ -17,33 +17,19 @@ func ParseInput(input string) ([]string, error) {
 
 		// Handle escape sequences
 		if escaped {
-			if ch == '\n' {
-				escaped = false // Ignore \newline (line continuation)
-				continue
-			}
-
-			// Inside double quotes, only certain characters are escaped
-			if inQuotes == '"' && (ch == '"' || ch == '$' || ch == '`' || ch == '\\') {
-				current.WriteRune(ch)
-			} else if inQuotes == 0 { // Outside quotes, backslash escapes any character
-				current.WriteRune(ch)
-			} else {
-				current.WriteRune('\\') // Inside single quotes, backslash is preserved
-				current.WriteRune(ch)
-			}
-
+			current.WriteRune(ch) // Keep the escaped character
 			escaped = false
 			continue
 		}
 
 		switch ch {
 		case '\\':
-			escaped = true
+			escaped = true // Mark next character as escaped
 		case ' ', '\t':
 			if inQuotes != 0 {
 				current.WriteRune(ch) // Keep spaces inside quotes
 			} else if current.Len() > 0 {
-				tokens = append(tokens, current.String())
+				tokens = append(tokens, current.String()) // Add completed token
 				current.Reset()
 			}
 		case '\'', '"':
@@ -52,7 +38,7 @@ func ParseInput(input string) ([]string, error) {
 			} else if inQuotes == 0 {
 				inQuotes = ch // Opening quote
 			} else {
-				current.WriteRune(ch) // Nested quote inside different type
+				current.WriteRune(ch) // Keep the quote if it's inside different quotes
 			}
 		default:
 			current.WriteRune(ch)
@@ -68,7 +54,7 @@ func ParseInput(input string) ([]string, error) {
 	}
 
 	if current.Len() > 0 {
-		tokens = append(tokens, current.String())
+		tokens = append(tokens, current.String()) // Add last token
 	}
 
 	return tokens, nil
