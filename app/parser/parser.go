@@ -24,7 +24,21 @@ func ParseInput(input string) ([]string, error) {
 
 		switch ch {
 		case '\\':
-			escaped = true // Mark next character as escaped
+			if i+1 < len(input) { // Check if there's a next character
+				next := rune(input[i+1])
+				switch next {
+				case 'n':
+					current.WriteRune('\n') // Convert \n to actual newline
+				case '\\', '\'', '"':
+					current.WriteRune(next) // Preserve escaped special characters
+				default:
+					current.WriteRune('\\') // Keep the backslash for unknown escapes
+					current.WriteRune(next)
+				}
+				i++ // Skip the next character since it's handled
+			} else {
+				return nil, errors.New("syntax error: trailing backslash")
+			}
 		case ' ', '\t':
 			if inQuotes != 0 {
 				current.WriteRune(ch) // Keep spaces inside quotes

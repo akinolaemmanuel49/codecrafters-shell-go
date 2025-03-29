@@ -9,8 +9,6 @@ func CdImpl(args *[]string) {
 	pwd, _ := os.Getwd()
 	os.Setenv("OLDPWD", os.Getenv("PWD"))
 	os.Setenv("PWD", pwd)
-	// ENVIRONMENT_VARIABLES["OLDPWD"] = ENVIRONMENT_VARIABLES["PWD"]
-	// ENVIRONMENT_VARIABLES["PWD"] = pwd
 
 	if args == nil || len(*args) == 0 {
 		os.Chdir(os.Getenv("HOME"))
@@ -24,7 +22,6 @@ func CdImpl(args *[]string) {
 	}
 
 	if dir == "-" {
-		// dir = ENVIRONMENT_VARIABLES["OLDPWD"]
 		dir = os.Getenv("OLDPWD")
 		if dir == "" {
 			fmt.Fprintln(os.Stderr, "cd: OLDPWD not set")
