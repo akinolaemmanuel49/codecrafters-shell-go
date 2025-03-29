@@ -5,42 +5,23 @@ import (
 	"strings"
 )
 
-// ParseInput parses a shell-like command string into arguments, handling quotes and escapes.
-func ParseInput(input string) ([]string, string, error) {
-	input = strings.Trim(input, "\r\n")
+// ParseInput extracts arguments, handling quotes and backslashes correctly.
+func ParseInput(input string) []string {
+	var result []string
 
-	if input == "" {
-		return nil, "", nil
-	}
+	// Match quoted strings or unquoted words
+	re := regexp.MustCompile(`"([^"\\]*(\\.[^"\\]*)*)"|'([^'\\]*(\\.[^'\\]*)*)'|\\?(\S+)`)
+	matches := re.FindAllStringSubmatch(input, -1)
 
-	// Extract command and argument string
-	command, argstr, _ := strings.Cut(input, " ")
-
-	var args []string
-
-	if strings.Contains(input, "\"") {
-		re := regexp.MustCompile("\"(.*?)\"")
-		args = re.FindAllString(input, -1)
-		for i := range args {
-			args[i] = strings.Trim(args[i], "\"")
-		}
-	} else if strings.Contains(input, "'") {
-		re := regexp.MustCompile("'(.*?)'")
-		args = re.FindAllString(input, -1)
-		for i := range args {
-			args[i] = strings.Trim(args[i], "'")
-		}
-	} else {
-		if strings.Contains(argstr, "\\") {
-			re := regexp.MustCompile(`[^\\] +`)
-			args = re.Split(argstr, -1)
-			for i := range args {
-				args[i] = strings.ReplaceAll(args[i], "\\", "")
-			}
-		} else {
-			args = strings.Fields(argstr)
+	for _, match := range matches {
+		if match[1] != "" { // Double-quoted string
+			result = append(result, strings.ReplaceAll(match[1], `\"`, `"`))
+		} else if match[3] != "" { // Single-quoted string
+			result = append(result, match[3])
+		} else if match[5] != "" { // Unquoted word with optional backslash prefix
+			result = append(result, strings.ReplaceAll(match[5], "\\", ""))
 		}
 	}
 
-	return args, command, nil
+	return result
 }
