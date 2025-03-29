@@ -89,7 +89,7 @@ func cdImpl(args *[]string) {
 		}
 		err := os.Chdir(dir)
 		if err != nil {
-			fmt.Fprintln(os.Stderr, "cd:", err)
+			fmt.Fprintf(os.Stderr, "cd: %s: No such file or directory\n", dir)
 			return
 		}
 		return
@@ -97,7 +97,7 @@ func cdImpl(args *[]string) {
 
 	err := os.Chdir(dir)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "cd:", err)
+		fmt.Fprintf(os.Stderr, "cd: %s: No such file or directory\n", dir)
 		return
 	}
 }
