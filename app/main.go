@@ -18,6 +18,7 @@ const (
 	ECHO = "echo"
 	TYPE = "type"
 	PWD  = "pwd"
+	CD   = "cd"
 )
 
 var COMMANDS = []string{
@@ -25,7 +26,10 @@ var COMMANDS = []string{
 	ECHO,
 	TYPE,
 	PWD,
+	CD,
 }
+
+var ENVIRONMENT_VARIABLES = map[string]string{}
 
 func exitImpl(codeStr *string) {
 	fmt.Fprint(os.Stdout, "exit\n")
@@ -63,6 +67,39 @@ func pwdImpl() {
 	dir, _ := os.Getwd()
 
 	fmt.Fprintln(os.Stdout, dir)
+}
+
+func cdImpl(args *[]string) {
+	pwd, _ := os.Getwd()
+	ENVIRONMENT_VARIABLES["OLDPWD"] = ENVIRONMENT_VARIABLES["PWD"]
+	ENVIRONMENT_VARIABLES["PWD"] = pwd
+
+	if args == nil || len(*args) == 0 {
+		os.Chdir(os.Getenv("HOME"))
+		return
+	}
+
+	dir := (*args)[0]
+
+	if dir == "-" {
+		dir = ENVIRONMENT_VARIABLES["OLDPWD"]
+		if dir == "" {
+			fmt.Fprintln(os.Stderr, "cd: OLDPWD not set")
+			return
+		}
+		err := os.Chdir(dir)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "cd:", err)
+			return
+		}
+		return
+	}
+
+	err := os.Chdir(dir)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "cd:", err)
+		return
+	}
 }
 
 func execImpl(command string, args []string) {
@@ -104,6 +141,14 @@ func eval(input string) (string, error) {
 		return "", nil
 	case PWD:
 		pwdImpl()
+		return "", nil
+	case CD:
+		if len(_args) > 1 {
+			fmt.Fprintf(os.Stderr, "%s: too many arguments\n", CD)
+			return "", nil
+		} else {
+			cdImpl(&_args)
+		}
 		return "", nil
 	default:
 		execImpl(_command, _args)
