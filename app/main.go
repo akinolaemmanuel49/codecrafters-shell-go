@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"slices"
 	"strconv"
 	"strings"
@@ -61,12 +60,9 @@ func typeImpl(args []string) {
 }
 
 func pwdImpl() {
-	ex, err := os.Executable()
-	if err != nil {
-		return
-	}
-	exPath := filepath.Dir(ex)
-	fmt.Fprint(os.Stdout, exPath)
+	dir, _ := os.Getwd()
+
+	fmt.Fprintln(os.Stdout, dir)
 }
 
 func execImpl(command string, args []string) {
