@@ -54,13 +54,13 @@ func main() {
 	for {
 		fmt.Fprint(os.Stdout, "$ ")
 		reader := bufio.NewReader(os.Stdin)
-		command, err := reader.ReadString('\n')
+		input, err := reader.ReadString('\n')
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error reading input: %v\n", err)
+			fmt.Fprintln(os.Stderr, err)
 			return
 		}
 
-		output, err := eval(command)
+		output, err := eval(input)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "%v\n", err)
 		} else {
