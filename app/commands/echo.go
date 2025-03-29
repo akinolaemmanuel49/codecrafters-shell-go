@@ -9,5 +9,5 @@ func EchoImpl(args []string) {
 		}
 		fmt.Print(arg)
 	}
-	// fmt.Println() // Add newline at the end (like Bash)
+	fmt.Println() // Add newline at the end (like Bash)
 }
