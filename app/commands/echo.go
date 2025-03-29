@@ -4,7 +4,6 @@ import "fmt"
 
 func EchoImpl(args []string) {
 	for _, arg := range args {
-		fmt.Print(arg, " ")
+		fmt.Print(arg)
 	}
-	fmt.Println()
 }
