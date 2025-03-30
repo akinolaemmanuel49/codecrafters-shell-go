@@ -1,3 +1,4 @@
+parser.go
 commands
 main.go
 parser
