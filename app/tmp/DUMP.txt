@@ -1,6 +1,5 @@
-cd.go
-constants.go
-echo.go
-exit.go
-pwd.go
-type.go
+commands
+main.go
+parser
+tmp
+utils

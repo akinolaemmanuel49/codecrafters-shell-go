@@ -19,7 +19,7 @@ func RedirectionImpl(tokens []string) ([]string, *os.File, error) {
 
 	// Look for ">" redirection operator in the tokens
 	for i := 0; i < len(tokens); i++ {
-		if tokens[i] == ">" {
+		if tokens[i] == ">" || tokens[i] == "1>" {
 			// We found a redirection operator
 			if i == len(tokens)-1 {
 				// ">" is the last token, which is invalid (no target file)
