@@ -1,12 +1,20 @@
 package parser
 
 import (
+	"os"
 	"strings"
+
+	"github.com/codecrafters-io/shell-starter-go/app/utils"
 )
 
-func ParseInput(input string) []string {
+func ParseInput(input string) ([]string, *os.File, error) {
 	// Trim any carriage returns or newlines
 	_input := strings.Trim(input, "\r\n")
+
+	if _input == "" {
+		return []string{}, nil, nil
+	}
+
 	var tokens []string
 	var currentToken string
 	var inWord bool = false
@@ -91,5 +99,10 @@ func ParseInput(input string) []string {
 		tokens = append(tokens, currentToken)
 	}
 
-	return tokens
+	tokens, outputFile, err := utils.RedirectionImpl(tokens)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return tokens, outputFile, nil
 }
