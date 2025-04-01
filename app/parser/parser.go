@@ -7,12 +7,12 @@ import (
 	"github.com/codecrafters-io/shell-starter-go/app/utils"
 )
 
-func ParseInput(input string) ([]string, *os.File, error) {
+func ParseInput(input string) ([]string, *os.File, *os.File, error) {
 	// Trim any carriage returns or newlines
 	_input := strings.Trim(input, "\r\n")
 
 	if _input == "" {
-		return []string{}, nil, nil
+		return []string{}, nil, nil, nil
 	}
 
 	var tokens []string
@@ -99,10 +99,10 @@ func ParseInput(input string) ([]string, *os.File, error) {
 		tokens = append(tokens, currentToken)
 	}
 
-	tokens, outputFile, err := utils.RedirectionImpl(tokens)
+	tokens, stdoutFile, stderrFile, err := utils.RedirectionImpl(tokens)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
-	return tokens, outputFile, nil
+	return tokens, stdoutFile, stderrFile, nil
 }

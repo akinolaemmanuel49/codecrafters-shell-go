@@ -90,16 +90,36 @@ func main() {
 
 // Modified version of eval to work with our prompter approach
 func eval(input string) (string, error) {
-	tokens, outputFile, _ := parser.ParseInput(input)
+	tokens, stdoutFile, stderrFile, err := parser.ParseInput(input)
+	if err != nil {
+		return "", err
+	}
+
+	// Handle empty input
+	if len(tokens) == 0 {
+		return "", nil
+	}
+
 	originalStdout := os.Stdout
-	if outputFile != nil {
+	if stdoutFile != nil {
 		// Replace stdout with our file
-		os.Stdout = outputFile
+		os.Stdout = stdoutFile
 		defer func() {
-			outputFile.Close()
+			stdoutFile.Close()
 			os.Stdout = originalStdout
 		}()
 	}
+
+	originalStderr := os.Stderr
+	if stderrFile != nil {
+		// Replace stderr with our file
+		os.Stderr = stderrFile
+		defer func() {
+			stderrFile.Close()
+			os.Stderr = originalStderr
+		}()
+	}
+
 	output, err := utils.ExecuteCommand(tokens)
 	return output, err
 }

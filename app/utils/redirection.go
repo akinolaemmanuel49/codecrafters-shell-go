@@ -4,66 +4,85 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
-	"strings"
 )
 
-// RedirectionImpl processes tokens for output redirection.
-// It supports truncating (`>`), appending (`>>`), stderr+stdout redirection (`&>`, `>&`), and appending both (`&>>`).
-func RedirectionImpl(tokens []string) ([]string, *os.File, error) {
+// RedirectionImpl processes tokens for output and error redirection.
+// It detects redirection operators (>, >>, 2>, 2>>, &>, &>>) and returns:
+// 1. Modified tokens list with redirection operators and targets removed
+// 2. File descriptors for stdout and stderr (nil if not redirected)
+// 3. Any error encountered during processing
+func RedirectionImpl(tokens []string) ([]string, *os.File, *os.File, error) {
+	var stdoutFile, stderrFile *os.File
+	var err error
+
 	if len(tokens) == 0 {
-		return tokens, nil, nil
+		return tokens, nil, nil, nil
 	}
 
-	for i := 0; i < len(tokens); i++ {
-		if strings.HasPrefix(tokens[i], ">") || strings.HasPrefix(tokens[i], "&>") {
-			var filename string
-			var flags int
-			redirectStdErr := false // Track whether stderr should be redirected too
-
-			if tokens[i] == ">>" || tokens[i] == "&>>" {
-				// Appending mode
-				flags = os.O_APPEND | os.O_CREATE | os.O_WRONLY
-				redirectStdErr = (tokens[i] == "&>>")
-			} else if tokens[i] == ">" || tokens[i] == "&>" || tokens[i] == ">&" {
-				// Truncate mode
-				flags = os.O_TRUNC | os.O_CREATE | os.O_WRONLY
-				redirectStdErr = (tokens[i] == "&>" || tokens[i] == ">&")
-			} else {
-				continue
+	cleanTokens := []string{}
+	i := 0
+	for i < len(tokens) {
+		if tokens[i] == ">" || tokens[i] == "1>" || tokens[i] == ">|" {
+			// Standard output redirection (truncate)
+			if i+1 >= len(tokens) {
+				return nil, nil, nil, errors.New("syntax error: no target for redirection")
 			}
-
-			// Ensure there's a filename
-			if i == len(tokens)-1 {
-				return nil, nil, errors.New("syntax error: no target for redirection")
+			stdoutFile, err = createFile(tokens[i+1], os.O_CREATE|os.O_WRONLY|os.O_TRUNC)
+			i += 2
+		} else if tokens[i] == ">>" || tokens[i] == "1>>" {
+			// Standard output redirection (append)
+			if i+1 >= len(tokens) {
+				return nil, nil, nil, errors.New("syntax error: no target for appending redirection")
 			}
-
-			filename = tokens[i+1]
-
-			// Ensure directory exists
-			dir := filepath.Dir(filename)
-			if err := os.MkdirAll(dir, 0o755); err != nil {
-				return nil, nil, err
+			stdoutFile, err = createFile(tokens[i+1], os.O_CREATE|os.O_WRONLY|os.O_APPEND)
+			i += 2
+		} else if tokens[i] == "2>" {
+			// Standard error redirection (truncate)
+			if i+1 >= len(tokens) {
+				return nil, nil, nil, errors.New("syntax error: no target for stderr redirection")
 			}
-
-			// Open file with proper flags
-			file, err := os.OpenFile(filename, flags, 0o644)
-			if err != nil {
-				return nil, nil, err
+			stderrFile, err = createFile(tokens[i+1], os.O_CREATE|os.O_WRONLY|os.O_TRUNC)
+			i += 2
+		} else if tokens[i] == "2>>" {
+			// Standard error redirection (append)
+			if i+1 >= len(tokens) {
+				return nil, nil, nil, errors.New("syntax error: no target for stderr appending redirection")
 			}
-
-			// Redirect stderr if required
-			if redirectStdErr {
-				os.Stderr = file
+			stderrFile, err = createFile(tokens[i+1], os.O_CREATE|os.O_WRONLY|os.O_APPEND)
+			i += 2
+		} else if tokens[i] == "&>" || tokens[i] == "&>|" {
+			// Redirect both stdout and stderr (truncate)
+			if i+1 >= len(tokens) {
+				return nil, nil, nil, errors.New("syntax error: no target for &> redirection")
 			}
-
-			// Remove redirection operators and filename from tokens
-			if i > 0 {
-				return tokens[:i], file, nil
+			stdoutFile, err = createFile(tokens[i+1], os.O_CREATE|os.O_WRONLY|os.O_TRUNC)
+			stderrFile = stdoutFile // Redirect stderr to same file
+			i += 2
+		} else if tokens[i] == "&>>" {
+			// Redirect both stdout and stderr (append)
+			if i+1 >= len(tokens) {
+				return nil, nil, nil, errors.New("syntax error: no target for &>> redirection")
 			}
-			return []string{}, file, nil
+			stdoutFile, err = createFile(tokens[i+1], os.O_CREATE|os.O_WRONLY|os.O_APPEND)
+			stderrFile = stdoutFile // Redirect stderr to same file
+			i += 2
+		} else {
+			cleanTokens = append(cleanTokens, tokens[i])
+			i++
+		}
+		if err != nil {
+			return nil, nil, nil, err
 		}
 	}
 
-	// No redirection found
-	return tokens, nil, nil
+	return cleanTokens, stdoutFile, stderrFile, nil
+}
+
+// createFile ensures the target file exists and opens it with the given flag
+func createFile(filename string, flag int) (*os.File, error) {
+	dir := filepath.Dir(filename)
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return nil, err
+	}
+	return os.OpenFile(filename, flag, 0o644)
 }
