@@ -1,6 +1,0 @@
-parser.go
-commands
-main.go
-parser
-tmp
-utils
